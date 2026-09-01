@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(26)
 	}
 }
 
@@ -21,6 +21,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Convierte el backend en un validador de tokens JWT (OAuth2 Resource Server)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Se agrega la versión al final (:5.18.0)
+    implementation 'com.azure.spring:spring-cloud-azure-starter-active-directory:5.18.0'
 }
 
 tasks.named('test') {

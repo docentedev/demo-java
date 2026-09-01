@@ -155,8 +155,8 @@ En el paso de tu pipeline encargado de ejecutar la aplicación en la instancia E
 ```
 curl -X POST "https://login.microsoftonline.com/de20110d-c44f-4da1-9a22-4c390d9d7e26/oauth2/v2.0/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=426120e7-937d-4322-9595-549ab987e7d8" \
-  -d "scope=api://426120e7-937d-4322-9595-549ab987e7d8/.default" \
+  -d "client_id=xxxxx" \
+  -d "scope=api://xxxxx/.default" \
   -d "client_secret=TU_CLIENT_SECRET_AQUI" \
   -d "grant_type=client_credentials"
 
