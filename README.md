@@ -33,3 +33,4 @@ Ahora que ya tienes la instancia creada (o lista para lanzar) y tu llave `.pem` 
 3. Subir el archivo `deploy.yml` de GitHub Actions para que compile y despliegue solito tu código cada vez que hagas un `push`.
 
 ¿Damos el salto a configurar los Secrets en GitHub?
+.
