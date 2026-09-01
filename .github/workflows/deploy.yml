@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main", "master" ]
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -36,6 +40,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ec2-user
         key: ${{ secrets.EC2_SSH_KEY }}
+        command_timeout: 60s
         script: |
           mkdir -p /home/ec2-user/app
           
