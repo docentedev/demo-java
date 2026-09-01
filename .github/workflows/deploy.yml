@@ -2,43 +2,41 @@ name: Deploy Spring Boot to EC2
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '26' # O la versión exacta compatible que tengas (Java 26 aún no tiene soporte nativo estable en algunas acciones de setup-java, prueba con 21 o 23 si te da error de versión)
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "26" # Java 21 LTS es totalmente compatible con los runners; si tu código exige Java 26, prueba si el runner lo toma, o usa 21 que es la estándar estable recomendada para producción en AWS.
 
-    # 1. AQUÍ ESTÁ EL CAMBIO: Usamos working-directory si tu proyecto está en una subcarpeta
-    - name: Build with Maven
-      run: mvn clean package -DskipTests
-      working-directory: ./nombre-de-tu-subcarpeta # Cambia esto por la carpeta donde está tu pom.xml (si está en la raíz, borra esta línea)
+      # Usamos Gradle en lugar de Maven
+      - name: Build with Gradle
+        run: ./gradlew bootJar -x test
 
-    - name: Copy JAR to EC2 via SCP
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "nombre-de-tu-subcarpeta/target/*.jar" # Ajusta la ruta del jar
-        target: "/home/ec2-user/app"
+      - name: Copy JAR to EC2 via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "build/libs/*.jar"
+          target: "/home/ec2-user/app"
 
-    - name: Restart Spring Boot App via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          mkdir -p /home/ec2-user/app
-          pkill -f 'java -jar' || true
-          # Ojo con la ruta del jar al ejecutarlo en la EC2
-          nohup java -jar /home/ec2-user/app/nombre-de-tu-subcarpeta/target/*.jar > /home/ec2-user/app/app.log 2>&1 &
+      - name: Restart Spring Boot App via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ec2-user/app
+            pkill -f 'java -jar' || true
+            nohup java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 &
