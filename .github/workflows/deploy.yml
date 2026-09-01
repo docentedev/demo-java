@@ -39,16 +39,13 @@ jobs:
         script: |
           mkdir -p /home/ec2-user/app
           
-          # Matar cualquier proceso previo de Java de forma forzosa pero limpia
+          # Matar cualquier proceso previo en el puerto 8080 o java
           fuser -k 8080/tcp || true
           pkill -f 'java -jar' || true
-          
-          # Esperar un segundo para asegurar que el puerto quede libre
           sleep 2
           
-          # Lanzar la nueva versión desacoplada por completo
-          nohup java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 < /dev/null &
+          # Usamos setsid para crear una nueva sesión de sistema completamente aislada del canal SSH
+          setsid java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 &
           
-          # Pausa breve para confirmar inicio y salir limpiamente
+          # Damos unos segundos para que arranque y salimos forzando salida limpia
           sleep 3
-          echo "Spring Boot app started successfully."
