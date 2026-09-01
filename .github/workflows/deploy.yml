@@ -19,7 +19,7 @@ jobs:
       uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
-        java-version: '21' # Si requieres otra versión puedes ajustarla aquí
+        java-version: '21'
 
     # Usamos Gradle en lugar de Maven
     - name: Build with Gradle
@@ -43,20 +43,18 @@ jobs:
           set -e
           mkdir -p /home/ec2-user/app
 
-          # Instala el JRE/JDK en la instancia si no esta presente (idempotente:
-          # no hace nada si ya esta instalado). Necesario porque el JDK del paso
-          # "Set up JDK" es solo para compilar en el runner, no llega a la EC2.
+          # Instala el JRE/JDK en la instancia si no esta presente (idempotente)
           command -v java >/dev/null 2>&1 || sudo dnf install -y java-21-amazon-corretto
 
-          # Matar cualquier proceso previo en el puerto 8080 o java.
-          # NOTA: usamos "-x java" (nombre exacto del proceso), NO "-f 'java -jar'":
-          # con -f, pkill compara contra la linea de comandos completa, y como este
-          # mismo script se ejecuta como `sh -c "<este texto>"`, la cadena "java -jar"
-          # aparece tambien en el propio comando del shell que corre el script -> se
-          # mataba a si mismo al instante (por eso moria con signal TERM en <1s).
+          # Matar cualquier proceso previo en el puerto 8080 o java
           fuser -k 8080/tcp || true
           pkill -x java || true
           sleep 2
+
+          # Exportar variables de entorno de Microsoft Entra ID
+          export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+          export AZURE_APP_ID_URI="${{ secrets.AZURE_APP_ID_URI }}"
 
           # setsid + stdin cerrado para desligar completamente la app del canal SSH
           setsid java -jar /home/ec2-user/app/*.jar > /home/ec2-user/app/app.log 2>&1 < /dev/null &
