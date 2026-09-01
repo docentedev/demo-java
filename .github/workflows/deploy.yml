@@ -43,14 +43,19 @@ jobs:
           set -e
           mkdir -p /home/ec2-user/app
 
-          # Matar cualquier proceso previo en el puerto 8080 o java
+          # Matar cualquier proceso previo en el puerto 8080 o java.
+          # NOTA: usamos "-x java" (nombre exacto del proceso), NO "-f 'java -jar'":
+          # con -f, pkill compara contra la linea de comandos completa, y como este
+          # mismo script se ejecuta como `sh -c "<este texto>"`, la cadena "java -jar"
+          # aparece tambien en el propio comando del shell que corre el script -> se
+          # mataba a si mismo al instante (por eso moria con signal TERM en <1s).
           fuser -k 8080/tcp || true
-          pkill -f "java -jar" || true
+          pkill -x java || true
           sleep 2
 
           # setsid + stdin cerrado para desligar completamente la app del canal SSH
           setsid java -jar /home/ec2-user/app/*.jar > /home/ec2-user/app/app.log 2>&1 < /dev/null &
-          disown
+          disown || true
 
           # Damos unos segundos para que arranque y salimos forzando salida limpia
           sleep 3
