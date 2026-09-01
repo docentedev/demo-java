@@ -31,12 +31,18 @@ jobs:
           target: "/home/ec2-user/app"
 
       - name: Restart Spring Boot App via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            mkdir -p /home/ec2-user/app
-            pkill -f 'java -jar' || true
-            nohup java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 &
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          mkdir -p /home/ec2-user/app
+          pkill -f 'java -jar' || true
+          
+          # Lanzamos la app desacoplandola por completo del shell de SSH
+          nohup java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 < /dev/null &
+          
+          # Damos un pequeño respiro para asegurarnos de que arrancó y liberamos el shell
+          sleep 3
+          echo "Spring Boot app restarted successfully."
