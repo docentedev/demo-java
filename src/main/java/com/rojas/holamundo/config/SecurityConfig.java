@@ -18,7 +18,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
                 )
                 // Indica que el backend validará JWT emitidos por Microsoft Entra ID
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt());
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
 
         return http.build();
     }
