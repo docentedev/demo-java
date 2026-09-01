@@ -43,6 +43,11 @@ jobs:
           set -e
           mkdir -p /home/ec2-user/app
 
+          # Instala el JRE/JDK en la instancia si no esta presente (idempotente:
+          # no hace nada si ya esta instalado). Necesario porque el JDK del paso
+          # "Set up JDK" es solo para compilar en el runner, no llega a la EC2.
+          command -v java >/dev/null 2>&1 || sudo dnf install -y java-21-amazon-corretto
+
           # Matar cualquier proceso previo en el puerto 8080 o java.
           # NOTA: usamos "-x java" (nombre exacto del proceso), NO "-f 'java -jar'":
           # con -f, pkill compara contra la linea de comandos completa, y como este
