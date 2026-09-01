@@ -25,32 +25,34 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew bootJar -x test
 
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
     - name: Copy JAR to EC2 via SCP
-      uses: appleboy/scp-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "build/libs/*.jar"
-        target: "/home/ec2-user/app"
+      run: |
+        ssh -i ~/.ssh/deploy_key ec2-user@${{ secrets.EC2_HOST }} 'mkdir -p /home/ec2-user/app'
+        scp -i ~/.ssh/deploy_key build/libs/*.jar ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/
 
     - name: Restart Spring Boot App via SSH
-      uses: appleboy/ssh-action@v1.2.5
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY }}
-        command_timeout: 60s
-        script: |
+      run: |
+        ssh -i ~/.ssh/deploy_key ec2-user@${{ secrets.EC2_HOST }} '
+          set -e
           mkdir -p /home/ec2-user/app
-          
+
           # Matar cualquier proceso previo en el puerto 8080 o java
           fuser -k 8080/tcp || true
-          pkill -f 'java -jar' || true
+          pkill -f "java -jar" || true
           sleep 2
-          
-          # Usamos setsid para crear una nueva sesión de sistema completamente aislada del canal SSH
-          setsid java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 &
-          
+
+          # setsid + stdin cerrado para desligar completamente la app del canal SSH
+          setsid java -jar /home/ec2-user/app/*.jar > /home/ec2-user/app/app.log 2>&1 < /dev/null &
+          disown
+
           # Damos unos segundos para que arranque y salimos forzando salida limpia
           sleep 3
+          exit 0
+        '
