@@ -11,7 +11,7 @@ import java.util.Map;
 public class HelloController {
 
     @GetMapping("/hello")
-    @PreAuthorize("hasAuthority('SCOPE_OT.Read')")
+    @PreAuthorize("hasRole('OT.Read')") // <--- Cambiado de SCOPE_ a hasRole
     public Map<String, String> hello() {
         return Map.of("message", "Hello, World!");
     }
