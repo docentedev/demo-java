@@ -38,11 +38,17 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           mkdir -p /home/ec2-user/app
+          
+          # Matar cualquier proceso previo de Java de forma forzosa pero limpia
+          fuser -k 8080/tcp || true
           pkill -f 'java -jar' || true
           
-          # Lanzamos la app desacoplandola por completo del shell de SSH
+          # Esperar un segundo para asegurar que el puerto quede libre
+          sleep 2
+          
+          # Lanzar la nueva versión desacoplada por completo
           nohup java -jar /home/ec2-user/app/build/libs/*.jar > /home/ec2-user/app/app.log 2>&1 < /dev/null &
           
-          # Damos un pequeño respiro para asegurarnos de que arrancó y liberamos el shell
+          # Pausa breve para confirmar inicio y salir limpiamente
           sleep 3
-          echo "Spring Boot app restarted successfully."
+          echo "Spring Boot app started successfully."
