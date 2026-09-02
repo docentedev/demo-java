@@ -2,7 +2,7 @@ name: Deploy Spring Boot to EC2
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "paso1" ]
 
 concurrency:
   group: deploy-${{ github.ref }}
